@@ -42,6 +42,17 @@ Assumption1c -> when request is within range but nothing found -> will respond 4
 mvn clean && mvn package && java -jar target/ferias-0.0.1-SNAPSHOT.jar
 ```
 
+```
+curl 'http://localhost:8080/holiday/next-twin?country1=PL&country2=SE&date=2021-02-20' | jq
+
+{
+  "date": "2021-04-04",
+  "name1": "Pierwszy dzien Wielkiej Nocy",
+  "name2": "Påskdagen"
+}
+
+```
+
 ### prod/dev specific stuff (e.g api key) 
 
 ```
