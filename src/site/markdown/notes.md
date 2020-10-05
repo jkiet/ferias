@@ -28,7 +28,7 @@ https://en.wikipedia.org/wiki/Public_holidays_in_the_United_Kingdom#Changes
 ```
 Assumption1a -> scope for my implementation will be `this and next year` 
 Assumption1b -> when request will be out of date range -> will respond 418
-Assumption1c -> when request is within range but nothing found -> will respond 418
+Assumption1c -> when request is within range but nothing found -> will respond 404
 ```
 
 ### Assumption2 - all dates should be treated as UTC 
