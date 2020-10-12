@@ -69,5 +69,5 @@ BY, CZ, DE, DK, FI, FR, IT, NL, PL, PT, SE, SK
 
 ## Known problems
 
-- encoding problems -> cyrillic does not work (e.g `RU`)
-- nice to have some cache for already parsed ical
+- ~~encoding problems -> cyrillic does not work (e.g `RU`)~~ localised (ics-local-name) version isn't available (isc / ics-clean only)
+- ~~nice to have some cache for already parsed ical~~

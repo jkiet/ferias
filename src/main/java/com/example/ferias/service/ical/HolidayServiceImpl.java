@@ -1,16 +1,17 @@
 package com.example.ferias.service.ical;
 
 import com.example.ferias.controller.HolidayInformation;
-import com.example.ferias.model.ComparableOccurrence;
-import com.example.ferias.model.ComparableOccurrenceTwin;
-import com.example.ferias.model.RangeEnvelope;
+import com.example.ferias.model.*;
 import com.example.ferias.service.HolidayService;
+
 
 import org.javatuples.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import java.net.MalformedURLException;
@@ -24,9 +25,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
-public class HolidayServiceImpl implements HolidayService {
+public class HolidayServiceImpl implements HolidayService, Lookup<List<ComparableOccurrence>, String> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HolidayInformation.class);
+
+    @Autowired
+    private ApplicationContext applicationContext;
 
     @Value("${holiday.api.url.format}")
     private String apiUrlFormat;
@@ -82,9 +86,15 @@ public class HolidayServiceImpl implements HolidayService {
         }
     }
 
-    //@Cacheable(value = "icalOccurencesCache", key = "#isoCountryCode")
-    public List<ComparableOccurrence> fetchComparableOccurrences(String isoCountryCode) {
+    @Cacheable(value = "icalOccurencesCache", key = "#isoCountryCode")
+    @Override
+    public List<ComparableOccurrence> lookupBy(String isoCountryCode) {
         return Ical.from(resolveApiURL(isoCountryCode)).getComparableOccurrences();
+    }
+
+    public List<ComparableOccurrence> fetchComparableOccurrences(String isoCountryCode) {
+        Lookup<List<ComparableOccurrence>, String> proxy = applicationContext.getBean(Lookup.class);
+        return proxy.lookupBy(isoCountryCode);
     }
 
     @Override
@@ -95,26 +105,28 @@ public class HolidayServiceImpl implements HolidayService {
 
         LOGGER.info("API_KEY_TEST --> `" + apiKey + "`");
 
-        List<ComparableOccurrence> sortedDistinct1afterStart = fetchComparableOccurrences(isoCountryCode1).stream()
+        List<ComparableOccurrence> distinct1afterStart = fetchComparableOccurrences(isoCountryCode1)
+                .stream()
                 .filter(o -> startInstant.isBefore(o.getInstant()))
                 .collect(Collectors.toList());
 
-        List<ComparableOccurrence> sortedDistinct2afterStart = fetchComparableOccurrences(isoCountryCode2).stream()
+        List<ComparableOccurrence> distinct2afterStart = fetchComparableOccurrences(isoCountryCode2)
+                .stream()
                 .filter(o -> startInstant.isBefore(o.getInstant()))
                 .collect(Collectors.toList());
 
         return new RangeEnvelope<>(true, range,
                 reduceToFirstMatch(
-                        sortedDistinct1afterStart,
-                        sortedDistinct2afterStart));
+                        distinct1afterStart,
+                        distinct2afterStart));
     }
 
     public static ComparableOccurrenceTwin reduceToFirstMatch(
-            List<ComparableOccurrence> sortedDistinct1,
-            List<ComparableOccurrence> sortedDistinct2) {
+            List<ComparableOccurrence> distinct1,
+            List<ComparableOccurrence> distinct2) {
         return ComparableOccurrenceTwin.from(Stream
-                .concat(sortedDistinct1.stream(),
-                        sortedDistinct2.stream())
+                .concat(distinct1.stream(),
+                        distinct2.stream())
                 .sorted(ComparableOccurrence::compareTo)
                 .reduce((Pair<ComparableOccurrence, ComparableOccurrence>) null,
                         (pair, o) -> {
@@ -133,4 +145,5 @@ public class HolidayServiceImpl implements HolidayService {
                         // 5.choose better match if necessary
                         (p1, p2) -> (0 < p1.getValue0().compareTo(p2.getValue0())) ? p1 : p2));
     }
+
 }

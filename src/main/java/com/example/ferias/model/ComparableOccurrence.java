@@ -4,7 +4,8 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 
-public class ComparableOccurrence implements Comparable <ComparableOccurrence>{
+public class ComparableOccurrence implements Serializable, Comparable <ComparableOccurrence>{
+    private static final long serialVersionUID = 1L;
     private final Instant instant;
     private final String name;
 
