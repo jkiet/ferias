@@ -1,6 +1,6 @@
 package com.example.ferias.model;
 
-import org.javatuples.Pair;
+import io.vavr.Tuple2;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -16,16 +16,16 @@ public class ComparableOccurrenceTwin implements Comparable<ComparableOccurrence
         this.name2 = name2;
     }
 
-    public static ComparableOccurrenceTwin from(Pair<ComparableOccurrence, ComparableOccurrence> pair) {
+    public static ComparableOccurrenceTwin from(Tuple2<ComparableOccurrence, ComparableOccurrence> pair) {
         if (null == pair)
             return null;
-        if (null == pair.getValue0() || null == pair.getValue1())
+        if (null == pair._1() || null == pair._2())
             return null;
-        if (0 != pair.getValue0().compareTo(pair.getValue1()))
+        if (0 != pair._1().compareTo(pair._2()))
             return null;
-        return new ComparableOccurrenceTwin(pair.getValue0().getInstant(),
-                pair.getValue0().getName(),
-                pair.getValue1().getName());
+        return new ComparableOccurrenceTwin(pair._1().getInstant(),
+                pair._1().getName(),
+                pair._2().getName());
     }
 
     public static ComparableOccurrenceTwin of(ComparableOccurrence o1, ComparableOccurrence o2) {

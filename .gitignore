@@ -1,3 +1,8 @@
+.*
+!/.gitignore
+*.log
+*.iml
+
 HELP.md
 target/
 !.mvn/wrapper/maven-wrapper.jar
@@ -31,3 +36,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+### vi swap files ###
+*~
+*.swp
+*.swo

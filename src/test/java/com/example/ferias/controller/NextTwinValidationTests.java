@@ -3,8 +3,8 @@ package com.example.ferias.controller;
 import com.example.ferias.model.ComparableOccurrenceTwin;
 import com.example.ferias.model.RangeEnvelope;
 import com.example.ferias.service.HolidayService;
-import com.example.ferias.service.ical.HolidayServiceImpl;
-import org.javatuples.Pair;
+
+import io.vavr.Tuple2;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,7 +53,7 @@ public class NextTwinValidationTests {
 
                 .thenReturn(
                         new RangeEnvelope<>(true,
-                                new Pair<>(Instant.now(), Instant.now()),
+                                new Tuple2<>(Instant.now(), Instant.now()),
                                 new ComparableOccurrenceTwin(Instant.now(), "foo", "bar")));
         // given
         this.mockMvc

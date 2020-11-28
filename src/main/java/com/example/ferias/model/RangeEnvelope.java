@@ -1,19 +1,19 @@
 package com.example.ferias.model;
 
-import org.javatuples.Pair;
+import io.vavr.Tuple2;
 
 public class RangeEnvelope<R, T> {
     private final boolean isWithinRange;
-    private final Pair<R, R> range;
+    private final Tuple2<R, R> range;
     private final T payload;
 
-    public RangeEnvelope(boolean isWithinRange, Pair<R, R> range) {
+    public RangeEnvelope(boolean isWithinRange, Tuple2<R, R> range) {
         this.isWithinRange = isWithinRange;
         this.range = range;
         this.payload = null;
     }
 
-    public RangeEnvelope(boolean isWithinRange, Pair<R, R> range, T payload) {
+    public RangeEnvelope(boolean isWithinRange, Tuple2<R, R> range, T payload) {
         this.isWithinRange = isWithinRange;
         this.range = range;
         this.payload = payload;
@@ -21,7 +21,11 @@ public class RangeEnvelope<R, T> {
 
     public boolean isWithinRange() { return isWithinRange; }
 
-    public Pair<R, R> getRange() { return range; }
+    public Tuple2<R, R> getRange() { return range; }
+
+    public R getRangeStart() { return range._1(); }
+
+    public R getRangeEnd() { return range._2(); }
 
     public T getPayload() { return payload; }
 }

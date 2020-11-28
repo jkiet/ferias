@@ -4,8 +4,11 @@ import com.example.ferias.controller.HolidayInformation;
 import com.example.ferias.model.*;
 import com.example.ferias.service.HolidayService;
 
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import io.vavr.collection.Stream;
 
-import org.javatuples.Pair;
+import io.vavr.control.Option;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +23,7 @@ import java.time.Instant;
 import java.time.Year;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class HolidayServiceImpl implements HolidayService, Lookup<List<ComparableOccurrence>, String> {
@@ -57,23 +58,42 @@ public class HolidayServiceImpl implements HolidayService, Lookup<List<Comparabl
                 .toInstant(ZoneOffset.UTC);
     }
 
-    public Pair<Instant, Instant> getRange() {
-        return new Pair<>(beginningOfThisYear(), endOfNextYear());
+    public Tuple2<Instant, Instant> getRange() {
+        return new Tuple2<>(beginningOfThisYear(), endOfNextYear());
     }
 
     public String resolveCountry(String isoCountryCode) {
-        Locale locale = new Locale("", isoCountryCode);
-        String name = locale.getDisplayCountry().replaceAll(" ", "-").toLowerCase();
-
-        // well, it should be done better, but I do not understand everything at the moment.
-        // - what about the regions?
-        //   * can query `united-kingdom` or region like `united-kingdom/england`
-        //     in this particular case it is possible to fall back to whole UK
-
-        if (name.equals("czechia"))
-            return "czech-republic";
-
-        return name;
+        switch (isoCountryCode) {
+            case "BY":
+                return "belarus";
+            case "CZ":
+                return "czech-republic";
+            case "DE":
+                return "germany";
+            case "DK":
+                return "denmark";
+            case "FI":
+                return "finland";
+            case "FR":
+                return "france";
+            case "IT":
+                return "italy";
+            case "NL":
+                return "netherlands";
+            case "PL":
+                return "poland";
+            case "PT":
+                return "portugal";
+            case "RU":
+                return "russia";
+            case "SE":
+                return "sweden";
+            case "SK":
+                return "slovakia";
+            case "GB":
+                return "united-kingdom";
+        }
+        throw new RuntimeException("Country code `" + isoCountryCode + "` not supported.");
     }
 
     public URL resolveApiURL(String isoCountryCode) {
@@ -98,9 +118,25 @@ public class HolidayServiceImpl implements HolidayService, Lookup<List<Comparabl
     }
 
     @Override
+    public RangeEnvelope<Instant, ComparableOccurrence> next(final Instant startInstant, String isoCountryCode) {
+        Tuple2<Instant, Instant> range = getRange();
+        if (startInstant.isBefore(range._1()) || startInstant.isAfter(range._2()))
+            return new RangeEnvelope<>(false, range);
+        return new RangeEnvelope<Instant, ComparableOccurrence>(true, range,
+                Stream.ofAll (fetchComparableOccurrences(isoCountryCode))
+                        .foldLeft (null,
+                                (acc, o) -> {
+                                    if (null == acc && startInstant.isBefore(o.getInstant()))
+                                        return o;
+                                    else
+                                        return acc;
+                                }));
+    }
+
+    @Override
     public RangeEnvelope<Instant, ComparableOccurrenceTwin> nextTwin(final Instant startInstant, String isoCountryCode1, String isoCountryCode2) {
-        Pair<Instant, Instant> range = getRange();
-        if (startInstant.isBefore(range.getValue0()) || startInstant.isAfter(range.getValue1()))
+        Tuple2<Instant, Instant> range = getRange();
+        if (startInstant.isBefore(range._1()) || startInstant.isAfter(range._2()))
             return new RangeEnvelope<>(false, range);
 
         LOGGER.info("API_KEY_TEST --> `" + apiKey + "`");
@@ -124,26 +160,23 @@ public class HolidayServiceImpl implements HolidayService, Lookup<List<Comparabl
     public static ComparableOccurrenceTwin reduceToFirstMatch(
             List<ComparableOccurrence> distinct1,
             List<ComparableOccurrence> distinct2) {
-        return ComparableOccurrenceTwin.from(Stream
-                .concat(distinct1.stream(),
-                        distinct2.stream())
-                .sorted(ComparableOccurrence::compareTo)
-                .reduce((Pair<ComparableOccurrence, ComparableOccurrence>) null,
-                        (pair, o) -> {
-                            // 1.complete half of pair
-                            if (null == pair)
-                                return new Pair<>(o, null);
-                            // 2. complete the whole pair
-                            if (null == pair.getValue1())
-                                return pair.setAt1(o);
-                            // 3.`shift left` when instants are away
-                            if (0 != pair.getValue0().compareTo(pair.getValue1()))
-                                return pair.setAt0(pair.getValue1()).setAt1(o);
-                            // 4.pass forward the same matching pair
-                            return pair;
-                        },
-                        // 5.choose better match if necessary
-                        (p1, p2) -> (0 < p1.getValue0().compareTo(p2.getValue0())) ? p1 : p2));
+        return ComparableOccurrenceTwin.from(
+                Stream.concat(distinct1, distinct2)
+                        .sorted(ComparableOccurrence::compareTo)
+                        .foldLeft(null,
+                                (pair, o) -> {
+                                    // 1.complete half of pair
+                                    if (null == pair)
+                                        return Tuple.of(o, null);
+                                    // 2. complete the whole pair
+                                    if (null == pair._2())
+                                        return pair.update2(o);
+                                    // 3.`shift left` when instants are away
+                                    if (0 != pair._1().compareTo(pair._2()))
+                                        return pair.update1(pair._2()).update2(o);
+                                    // 4.pass forward the same matching pair
+                                    return pair;
+                                }));
     }
 
 }

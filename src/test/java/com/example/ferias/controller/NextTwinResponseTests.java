@@ -3,11 +3,10 @@ package com.example.ferias.controller;
 import com.example.ferias.model.ComparableOccurrenceTwin;
 import com.example.ferias.model.RangeEnvelope;
 import com.example.ferias.service.HolidayService;
-import com.example.ferias.service.ical.HolidayServiceImpl;
-import org.javatuples.Pair;
+
+import io.vavr.Tuple2;
+
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -36,8 +35,8 @@ public class NextTwinResponseTests {
     @MockBean
     private HolidayService holidayService;
 
-    private Pair<Instant, Instant> getInstantPair() {
-        return new Pair<>(
+    private Tuple2<Instant, Instant> getInstantPair() {
+        return new Tuple2<>(
                 Year.of(2000).atMonth(1).atDay(1).atStartOfDay().toInstant(ZoneOffset.UTC),
                 Year.of(2001).atMonth(12).atEndOfMonth().atStartOfDay().toInstant(ZoneOffset.UTC));
     }
